@@ -39,6 +39,7 @@ int menu_num = 0, playerNumber_num = 1, aiDifficulty = 1;
 
 // menu_num - number from menuStates provided bellow;
 String menuState[] = {"Play", "Options"};
+String optionsState[] = {"Basic", "Advanced", "Back"};
 
 String gamemode = "welcome"; // first gamemode is welcome screen
 // gamemodes: welcome, menu, game
@@ -113,14 +114,40 @@ void welcomeLoop(){
 void menuLoop(){
   Serial.println("In menu screen");
   setupMenuScreen();
+
   // loop with limited actions
   while (gamemode == "menu"){
     updateMenuScreen();
     // if Play is selected and we click start button
+    if (isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft)){
+      lcd.setCursor(3, 1);
+      lcd.print("          ");
+      menu_num--;
+      if(menu_num < 0){
+        menu_num = 0;
+      }
+    } else if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)){
+      lcd.setCursor(3, 1);
+      lcd.print("          ");
+      menu_num++;
+      if(menu_num > 1){
+        menu_num = 1;
+      }
+    }
+
     if (menu_num == 0 & isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
       // proceed to game
       gamemode = "game";
+    } /*else if (menu_num == 1 & isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
+      // proceed to game
+      gamemode = "options";
+
+
+    // options loop with limited actions
+    while (gamemode == "options"){
     }
+    }*/
+    
   }
 }
 
