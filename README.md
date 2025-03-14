@@ -2,7 +2,7 @@
 Simple Pong game for Arduino using 3 buttons and LCD16x2
 
 # To do:
-~~* menu~~
+* ~~menu~~
 * working game with PvP mode
 * PvPC mode
 
