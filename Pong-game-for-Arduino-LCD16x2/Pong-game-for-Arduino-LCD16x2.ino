@@ -34,15 +34,11 @@ int lastReadingRight = LOW, stableRight = LOW;
 unsigned long lastDebounceTimeStart = 0, lastDebounceTimeLeft = 0, lastDebounceTimeRight = 0;
 const unsigned long debounceDelay = 50;
 
-// menu states
-int menu_num = 0, playerNumber_num = 1, aiDifficulty = 1;
+// game settings ( Players: <1,2>, AI DIfficulty: <1,9> )
+int playersNumber = 1, aiDifficulty = 5;
 
-// menu_num - number from menuStates provided bellow;
-String menuState[] = {"Play", "Options"};
-String optionsState[] = {"Basic", "Advanced", "Back"};
-
-String gamemode = "welcome"; // first gamemode is welcome screen
-// gamemodes: welcome, menu, game
+String gamemode = "welcome";
+// gamemodes: welcome, menu, menu2, game
 
 // print blinking text function
 void blinkText(String text, int column, int row, int time) {
@@ -64,19 +60,16 @@ void setupWelcomeScreen(){
   lcd.print("press start...  ");
 }
 
-
 // function to print is here so less spaghetti is bellow in loop
 void setupMenuScreen(){
   lcd.setCursor(0,0);
-  lcd.print("LB|          |RB");
+  lcd.print("LB|SETTINGS  |RB");
   lcd.setCursor(0,1);
   lcd.print("  |          |  ");
 }
 
-// print current option and blinking arrows to suggest player may use menu with buttons
+// print blinking arrows to suggest player may use menu with buttons
 void updateMenuScreen(){
-  lcd.setCursor(3, 1);
-  lcd.print(menuState[menu_num]);
   blinkText("<<", 0, 1, 1000); // left arrows
   blinkText(">>", 14, 1, 1000); // right arrows
 }
@@ -99,8 +92,11 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
   return false;
 }
 
+// Welcome screen
 void welcomeLoop(){
-  Serial.println("In welcome screen");
+  Serial.println("================");
+  Serial.println("WELCOME IN PONG!");
+  Serial.println("================");
   // loop with limited actions
   while (gamemode == "welcome"){ 
     // isMenuOppened = isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart);
@@ -111,46 +107,82 @@ void welcomeLoop(){
   }
 }
 
+// Menu screen
 void menuLoop(){
-  Serial.println("In menu screen");
+  Serial.println("SETTINGS        ");
+  Serial.print("Players: ");
   setupMenuScreen();
 
   // loop with limited actions
   while (gamemode == "menu"){
     updateMenuScreen();
-    // if Play is selected and we click start button
+    lcd.setCursor(3, 1);
+    lcd.print("Players: ");
+    lcd.print(playersNumber);
+
     if (isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft)){
-      lcd.setCursor(3, 1);
-      lcd.print("          ");
-      menu_num--;
-      if(menu_num < 0){
-        menu_num = 0;
+      playersNumber--;
+      if (playersNumber < 1){
+        playersNumber = 1;
       }
-    } else if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)){
-      lcd.setCursor(3, 1);
-      lcd.print("          ");
-      menu_num++;
-      if(menu_num > 1){
-        menu_num = 1;
+    }
+    
+    if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)){
+      playersNumber++;
+      if (playersNumber > 2){
+        playersNumber = 2;
       }
     }
 
-    if (menu_num == 0 & isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
-      // proceed to game
+    if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
+      if (playersNumber == 1){
+        gamemode = "menu2";
+        Serial.println(playersNumber);
+        Serial.print("AI power: ");
+        setupMenuScreen();
+      } else {
+        gamemode = "game";
+        Serial.println(playersNumber);
+        Serial.println("================");
+        Serial.println("");
+      }
+    }
+    
+  }
+
+  // if playersNumber == 1 player may select difficulty
+  while (gamemode == "menu2"){
+    updateMenuScreen();
+
+      lcd.setCursor(3, 1);
+      lcd.print("AI LVL: ");
+      lcd.print(aiDifficulty);
+
+    if (isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft)){
+      aiDifficulty--;
+      if (aiDifficulty < 1){
+        aiDifficulty = 1;
+      }
+    }
+    
+    if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)){
+      aiDifficulty++;
+      if (aiDifficulty > 9){
+        aiDifficulty = 9;
+      }
+    }
+
+    if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
       gamemode = "game";
-    } /*else if (menu_num == 1 & isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
-      // proceed to game
-      gamemode = "options";
-
-
-    // options loop with limited actions
-    while (gamemode == "options"){
+        Serial.println(aiDifficulty);
+        Serial.println("================");
+        Serial.println("");
     }
-    }*/
     
   }
 }
 
+// gamemode == game
 void gameLoop(){
   Serial.println("In game");
   lcd.clear();
