@@ -40,6 +40,9 @@ int playersNumber = 1, aiDifficulty = 5;
 String gamemode = "welcome";
 // gamemodes: welcome, menu, menu2, game
 
+// game info
+int pointsLeft = 0, pointsRight = 0, gameDelay = 200;
+
 // print blinking text function
 void blinkText(String text, int column, int row, int time) {
     lcd.setCursor(column, row);
@@ -95,7 +98,7 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
 // Welcome screen
 void welcomeLoop(){
   Serial.println("================");
-  Serial.println("WELCOME IN PONG!");
+  Serial.println("WELCOME TO PONG!");
   Serial.println("================");
   // loop with limited actions
   while (gamemode == "welcome"){ 
@@ -182,15 +185,146 @@ void menuLoop(){
   }
 }
 
+bool isLeftButtonPressed(){
+  if (digitalRead(leftButton) == HIGH){
+    lcd.setCursor(2, 1);
+    lcd.print(" ");
+    lcd.setCursor(2, 0);
+    lcd.print("|");
+    return true;
+  } else {
+    lcd.setCursor(2, 0);
+    lcd.print(" ");
+    lcd.setCursor(2, 1);
+    lcd.print("|");
+    return false;
+  }
+}
+
+bool isRightButtonPressed(){
+  if (digitalRead(rightButton) == HIGH){
+    lcd.setCursor(13, 1);
+    lcd.print(" ");
+    lcd.setCursor(13, 0);
+    lcd.print("|");
+    return true;
+  } else {
+    lcd.setCursor(13, 0);
+    lcd.print(" ");
+    lcd.setCursor(13, 1);
+    lcd.print("|");
+    return false;
+  }
+}
+
+void leftPlayerScored(){
+  if (++pointsLeft < 10){
+    lcd.setCursor(1, 1);
+  } else {
+    lcd.setCursor(0, 1);
+  }
+  
+  lcd.print(pointsLeft);
+}
+
+void rightPlayerScored(){
+  if (++pointsRight < 10){
+    lcd.setCursor(15, 1);
+  } else {
+    lcd.setCursor(14, 1);
+  }
+  lcd.print(pointsRight);
+}
+
+// ball is traveling from left to right
+void pathRight(int row){
+  // clear screen from old ball
+  lcd.setCursor(3, 0);
+  lcd.print(" ");
+  lcd.setCursor(3, 1);
+  lcd.print(" ");
+
+  for(int column = 4; column <= 12; column++){
+    if(column >= 4){
+      lcd.setCursor(column - 1, row);
+      lcd.print(" ");
+    }
+    lcd.setCursor(column, row);
+    lcd.print("O");
+    
+    isLeftButtonPressed();
+    isRightButtonPressed();
+
+    delay(gameDelay);
+  }
+
+  if (row == 0){
+    if (isRightButtonPressed() == false){
+      leftPlayerScored();
+    }
+  } else {
+    if (isRightButtonPressed() == true){
+      leftPlayerScored();
+    }
+  }
+}
+
+// ball is traveling from right to left
+void pathLeft(int row){
+  // clear screen from old ball
+  lcd.setCursor(12, 0);
+  lcd.print(" ");
+  lcd.setCursor(12, 1);
+  lcd.print(" ");
+
+  for(int column = 11; column >= 3; column--){
+    if (column <= 10){
+      lcd.setCursor(column + 1, row);
+      lcd.print(" ");
+    }
+    lcd.setCursor(column, row);
+    lcd.print("O");
+
+    isLeftButtonPressed();
+    isRightButtonPressed();
+
+    delay(gameDelay);
+  }
+
+  if (row == 0){
+    if (isLeftButtonPressed() == false){
+      rightPlayerScored();
+    }
+  } else {
+    if (isLeftButtonPressed() == true){
+      rightPlayerScored();
+    }
+  }
+}
+
 // gamemode == game
 void gameLoop(){
+  // setup game screen
   Serial.println("In game");
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("here i will");
+
+  if (playersNumber == 1){
+    lcd.print("P1            AI");
+  } else {
+    lcd.print("P1            P2");
+  }
+
   lcd.setCursor(0, 1);
-  lcd.print("rewrite the game");
+  lcd.print("00            00");
+
   while (gamemode == "game"){
+
+    pathLeft(random(0,2));
+
+    pathRight(random(0,2));
+
+
 
   }
 }
