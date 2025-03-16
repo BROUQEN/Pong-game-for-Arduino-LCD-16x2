@@ -41,7 +41,8 @@ String gamemode = "welcome";
 // gamemodes: welcome, menu, menu2, game
 
 // game info
-int pointsLeft = 0, pointsRight = 0, gameDelay = 200;
+const int defaultGameDelay = 200, scoredDelay = 1000; // delay in ms
+int pointsLeft = 0, pointsRight = 0, gameDelay = defaultGameDelay;
 
 // print blinking text function
 void blinkText(String text, int column, int row, int time) {
@@ -225,6 +226,16 @@ void leftPlayerScored(){
   }
   
   lcd.print(pointsLeft);
+  gameDelay = defaultGameDelay;
+
+  // print P1 scored message
+  lcd.setCursor(3, 0);  
+  lcd.print("P1 SCORED!");
+  lcd.setCursor(3, 1);  
+  lcd.print("          ");
+  delay(scoredDelay);
+  lcd.setCursor(3, 0);  
+  lcd.print("          ");
 }
 
 void rightPlayerScored(){
@@ -233,7 +244,18 @@ void rightPlayerScored(){
   } else {
     lcd.setCursor(14, 1);
   }
+
   lcd.print(pointsRight);
+  gameDelay = defaultGameDelay;
+
+  // print P2 scored message
+  lcd.setCursor(3, 0);  
+  lcd.print("P2 SCORED!");
+  lcd.setCursor(3, 1);  
+  lcd.print("          ");
+  delay(scoredDelay);
+  lcd.setCursor(3, 0);  
+  lcd.print("          ");
 }
 
 // ball is traveling from left to right
@@ -321,10 +343,10 @@ void gameLoop(){
   while (gamemode == "game"){
 
     pathLeft(random(0,2));
-
+    // increase ball speed randomly
+    gameDelay = random(gameDelay - 10, gameDelay);
     pathRight(random(0,2));
-
-
+    gameDelay = random(gameDelay - 10, gameDelay);
 
   }
 }
