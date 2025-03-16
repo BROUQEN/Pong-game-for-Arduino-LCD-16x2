@@ -38,7 +38,7 @@ const unsigned long debounceDelay = 50;
 int playersNumber = 1, aiDifficulty = 5;
 
 String gamemode = "welcome";
-// gamemodes: welcome, menu, menu2, game
+// gamemodes: welcome, menu, menu2, game, gameAI
 
 // game info
 const int defaultGameDelay = 200, scoredDelay = 1000; // delay in ms
@@ -177,7 +177,7 @@ void menuLoop(){
     }
 
     if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
-      gamemode = "game";
+      gamemode = "welcome";
         Serial.println(aiDifficulty);
         Serial.println("================");
         Serial.println("");
@@ -219,10 +219,15 @@ bool isRightButtonPressed(){
 }
 
 void leftPlayerScored(){
-  if (++pointsLeft < 10){
+  if (++pointsLeft <= 9){
     lcd.setCursor(1, 1);
-  } else {
+  } else if (pointsLeft <= 99){
     lcd.setCursor(0, 1);
+  } else if (pointsLeft == 100){
+    pointsLeft = 1;
+    lcd.setCursor(0, 1);
+    lcd.print("00");
+    lcd.setCursor(1, 1);
   }
   
   lcd.print(pointsLeft);
@@ -233,16 +238,22 @@ void leftPlayerScored(){
   lcd.print("P1 SCORED!");
   lcd.setCursor(3, 1);  
   lcd.print("          ");
+  Serial.println("P1 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   delay(scoredDelay);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
 }
 
 void rightPlayerScored(){
-  if (++pointsRight < 10){
+  if (++pointsRight <= 9){
     lcd.setCursor(15, 1);
-  } else {
+  } else if (pointsRight <= 99){
     lcd.setCursor(14, 1);
+  } else if (pointsRight == 100){
+    pointsRight = 1;
+    lcd.setCursor(14, 1);
+    lcd.print("00");
+    lcd.setCursor(15, 1);
   }
 
   lcd.print(pointsRight);
@@ -253,6 +264,7 @@ void rightPlayerScored(){
   lcd.print("P2 SCORED!");
   lcd.setCursor(3, 1);  
   lcd.print("          ");
+  Serial.println("P2 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   delay(scoredDelay);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
@@ -341,7 +353,7 @@ void gameLoop(){
   lcd.print("00            00");
 
   while (gamemode == "game"){
-
+    // random row: 0 is top line and 1 is bottom line
     pathLeft(random(0,2));
     // increase ball speed randomly
     gameDelay = random(gameDelay - 10, gameDelay);
@@ -360,12 +372,11 @@ void setup() {
 
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
-
-  // Print a welcome message to the LCD.
-  setupWelcomeScreen();
 }
 
 void loop() {
+  // Print a welcome message to the LCD.
+  setupWelcomeScreen();
 
   welcomeLoop();
   menuLoop();
