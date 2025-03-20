@@ -28,7 +28,7 @@ In this game, players can compete in two modes:
 - **Right Button** - Navigate right in the menu or control Player 2's paddle.
 
 ### Objective
-Keep the ball from passing your paddle by moving it up or down. The first to score 10 points wins!
+Keep the ball from passing your paddle by moving it up or down.
 
 ---
 
@@ -45,6 +45,8 @@ Keep the ball from passing your paddle by moving it up or down. The first to sco
 ✔️ Fully Working Game with PvP Mode  
 ✔️ Functional PvPC Mode  
 
+🟠 Add score limit option
+🟠 Add gameover sceen
 🟠 Fix remaining bugs  
 🟠 Improve PC logic for better gameplay  
 🟠 Optimize code for readability and performance  
