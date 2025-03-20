@@ -1,5 +1,5 @@
 # Pong Game for Arduino LCD 16x2
-A simple Pong game designed for Arduino using 3 buttons and an LCD 16x2 display. This project is a fun and engaging way to explore Arduino programming concepts.
+A simple Pong game designed for Arduino using 3 buttons and an LCD 16x2 display.
 
 ---
 
