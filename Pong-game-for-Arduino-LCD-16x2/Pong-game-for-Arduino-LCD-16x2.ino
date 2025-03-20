@@ -37,8 +37,16 @@ const unsigned long debounceDelay = 50;
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
 int playersNumber = 1, pcDifficulty = 5;
 
-// gamemodes: welcome, menu, menu2, game
-String gamemode = "welcome";
+// Define game modes using an enum
+enum GameMode {
+  WELCOME,
+  MENU,
+  MENU2,
+  GAME
+};
+
+// Initialize the gamemode as WELCOME at the start
+GameMode gamemode = WELCOME;
 
 // game info
 const int defaultGameDelay = 200, scoredDelay = 1000; // delay in ms
@@ -106,10 +114,10 @@ void welcomeLoop() {
   Serial.println("WELCOME TO PONG!");
   Serial.println("================");
   // loop with limited actions
-  while (gamemode == "welcome") { 
+  while (gamemode == WELCOME) { 
     // isMenuOppened = isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart);
     if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)) {
-      gamemode = "menu";
+      gamemode = MENU;
     }
     blinkText("Press start...", 0, 1, 1000); // blinking text at column 0, row 1, 1000ms seen / 1000ms hidden
   }
@@ -122,7 +130,7 @@ void menuLoop(){
   setupMenuScreen();
 
   // loop with limited actions
-  while (gamemode == "menu") {
+  while (gamemode == MENU) {
     updateMenuScreen();
     lcd.setCursor(3, 1);
     lcd.print("Players: ");
@@ -148,13 +156,13 @@ void menuLoop(){
     if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)) {
       if (playersNumber == 1) {
         // select pcPower
-        gamemode = "menu2";
+        gamemode = MENU2;
         Serial.println(playersNumber);
         Serial.print("PC lvl: ");
         setupMenuScreen();
       } else if (playersNumber == 2) {
         // play PvP
-        gamemode = "game";
+        gamemode = GAME;
         Serial.println(playersNumber);
         Serial.println("================");
         Serial.println("");
@@ -164,7 +172,7 @@ void menuLoop(){
   }
 
   // if playersNumber == 1 player may select difficulty
-  while (gamemode == "menu2") {
+  while (gamemode == MENU2) {
     updateMenuScreen();
 
       lcd.setCursor(3, 1);
@@ -189,7 +197,7 @@ void menuLoop(){
 
     // if player hits start then its P1vPC game
     if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
-      gamemode = "game";
+      gamemode = GAME;
         Serial.println(pcDifficulty);
         Serial.println("================");
         Serial.println("");
@@ -240,8 +248,8 @@ void leftPlayerScored() {
     lcd.setCursor(1, 1);
   } else if (pointsLeft <= 99) {
     lcd.setCursor(0, 1);
-  } else if (pointsLeft == 100) {
-    // points are beyond max visible value
+  } else {
+    // points are beyond max visible value of 99
     pointsLeft = 1;
     lcd.setCursor(0, 1);
     lcd.print("00");
@@ -268,8 +276,8 @@ void rightPlayerScored() {
     lcd.setCursor(15, 1);
   } else if (pointsRight <= 99) {
     lcd.setCursor(14, 1);
-  } else if (pointsRight == 100) {
-    // points are beyond max visible value
+  } else {
+    // points are beyond max visible value of 99
     pointsRight = 1;
     lcd.setCursor(14, 1);
     lcd.print("00");
@@ -309,12 +317,11 @@ void pathRight(int row) {
   lcd.print(" ");
 
   for (int column = 4; column <= 12; column++) {
-    if (column >= 4) {
-      lcd.setCursor(column - 1, row);
-      lcd.print(" ");
-    }
     lcd.setCursor(column, row);
     lcd.print("O");
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" ");
     
     // those functions works only as display 
     isLeftButtonPressed();
@@ -322,11 +329,10 @@ void pathRight(int row) {
       isRightButtonPressed();
     }
 
-    delay(gameDelay);
   }
 
   if (playersNumber == 1) {
-    if (pcLost() == true){
+    if (pcLost() == true) {
       leftPlayerScored();    
       // print paddle wrong (in bottom lane and clear top lane)
       if (row == 0) {
@@ -379,12 +385,11 @@ void pathLeft(int row) {
   lcd.print(" ");
 
   for (int column = 11; column >= 3; column--) {
-    if (column <= 10) {
-      lcd.setCursor(column + 1, row);
-      lcd.print(" ");
-    }
     lcd.setCursor(column, row);
     lcd.print("O");
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" ");
 
     isLeftButtonPressed();
 
@@ -392,14 +397,13 @@ void pathLeft(int row) {
       isRightButtonPressed();
     }
 
-    delay(gameDelay);
   }
 
   if (row == 0) {
     if (isLeftButtonPressed() == false) {
       rightPlayerScored();
     }
-  } else if (row == 1) {
+  } else {
     if (isLeftButtonPressed() == true) {
       rightPlayerScored();
     }
@@ -414,7 +418,8 @@ void gameLoop() {
   lcd.setCursor(0, 0);
 
   if (playersNumber == 1) {
-    lcd.print("P1            PC");
+    // print first paddle for pc
+    lcd.print("P1           |PC");
   } else {
     lcd.print("P1            P2");
   }
@@ -422,7 +427,7 @@ void gameLoop() {
   lcd.setCursor(0, 1);
   lcd.print("00            00");
 
-  while (gamemode == "game") {
+  while (gamemode == GAME) {
     // random row: 0 is top line and 1 is bottom line
     pathLeft(random(0,2));
     // increase ball speed randomly
@@ -459,4 +464,3 @@ void loop() {
   // isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight);
 
 }
-
