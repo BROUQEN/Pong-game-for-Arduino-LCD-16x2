@@ -45,8 +45,8 @@ Keep the ball from passing your paddle by moving it up or down.
 ✔️ Fully Working Game with PvP Mode  
 ✔️ Functional PvPC Mode  
 
-🟠 Add score limit option
-🟠 Add gameover sceen
+🟠 Add score limit option  
+🟠 Add gameover sceen  
 🟠 Fix remaining bugs  
 🟠 Improve PC logic for better gameplay  
 🟠 Optimize code for readability and performance  
