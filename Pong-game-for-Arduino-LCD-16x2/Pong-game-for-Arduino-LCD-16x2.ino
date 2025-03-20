@@ -376,7 +376,6 @@ void loop() {
             gamemode = MENU2;
             Serial.println(playersNumber);
             Serial.print("PC lvl: ");
-            setupMenuScreen();
           } else if (playersNumber == 2) {
             // play PvP
             gamemode = GAME;
