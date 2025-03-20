@@ -25,7 +25,7 @@ In this game, players can compete in two modes:
 ### Controls
 - **Start Button** - Begin the game or confirm menu selections.
 - **Left Button** - Navigate left in the menu or control Player 1's paddle.
-- **Right Button** - Navigate right in the menu or control Player 2's (or PC's) paddle.
+- **Right Button** - Navigate right in the menu or control Player 2's paddle.
 
 ### Objective
 Keep the ball from passing your paddle by moving it up or down. The first to score 10 points wins!
