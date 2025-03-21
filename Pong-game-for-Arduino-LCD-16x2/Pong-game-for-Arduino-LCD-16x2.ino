@@ -1,4 +1,8 @@
 /*
+ A simple Pong game for lcd 16x2
+ Original code at:
+ https://github.com/BROUQEN/Pong-game-for-Arduino-LCD-16x2.git
+
   The circuit:
  * LCD RS pin to digital pin 12
  * LCD Enable pin to digital pin 11
@@ -82,7 +86,7 @@ void setupMenuScreen() {
   lcd.print("LB|SETTINGS  |RB");
   lcd.setCursor(0,1);
   lcd.print("  |          |  ");
-  Serial.println("SETTINGS        ");
+  Serial.println("= SETTINGS =====");
   Serial.print("Players: ");
 }
 
@@ -331,9 +335,7 @@ void setup() {
 void loop() {
   switch (gamemode) {
     case WELCOME:
-      Serial.println("================");
       Serial.println("WELCOME TO PONG!");
-      Serial.println("================");
       // loop with limited actions
       while (gamemode == WELCOME) { 
         // isMenuOppened = isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart);
@@ -374,13 +376,15 @@ void loop() {
           if (playersNumber == 1) {
             // select pcPower
             gamemode = MENU2;
+            // clear lcd screen for next info
+            lcd.setCursor(3, 1);
+            lcd.print("          ");
             Serial.println(playersNumber);
             Serial.print("PC lvl: ");
           } else if (playersNumber == 2) {
             // play PvP
             gamemode = GAME;
             Serial.println(playersNumber);
-            Serial.println("================");
             Serial.println("");
           }
         }
@@ -416,14 +420,13 @@ void loop() {
       if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
         gamemode = GAME;
           Serial.println(pcDifficulty);
-          Serial.println("================");
           Serial.println("");
       }
       break;
       
     case GAME:
       // setup game screen
-      Serial.println("In game");
+      Serial.println("= IN GAME ======");
       lcd.clear();
       lcd.setCursor(0, 0);
 
