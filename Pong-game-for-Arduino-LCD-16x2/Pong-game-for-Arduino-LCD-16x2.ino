@@ -27,7 +27,7 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // select pins for buttons
-const int startButton = A0, leftButton = A1, rightButton = A2;
+const int START_BUTTON = A0, LEFT_BUTTON = A1, RIGHT_BUTTON = A2;
 
 // buttons work different in menu and in game to make game 100% fair
 // those variables are used for menu actions
@@ -36,7 +36,7 @@ int lastReadingLeft = LOW, stableLeft = LOW;
 int lastReadingRight = LOW, stableRight = LOW;
 
 unsigned long lastDebounceTimeStart = 0, lastDebounceTimeLeft = 0, lastDebounceTimeRight = 0;
-const unsigned long debounceDelay = 50;
+const unsigned long DEBOUNCE_DELAY = 50;
 
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
 int playersNumber = 1, pcDifficulty = 5;
@@ -53,8 +53,8 @@ enum GameMode {
 GameMode gamemode = WELCOME;
 
 // game info
-const int defaultGameDelay = 200, scoredDelay = 1000; // delay in ms
-int pointsLeft = 0, pointsRight = 0, gameDelay = defaultGameDelay;
+const int DEFAULT_GAME_DELAY = 200, SCORED_DELAY = 1000; // delay in ms
+int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEFAULT_GAME_DELAY;
 
 // print blinking text function
 // every time [s] change state
@@ -103,7 +103,7 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
     lastDebounceTime = millis();
     lastReading = reading;
   }
-  if ((millis() - lastDebounceTime) > debounceDelay) {
+  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
     if (reading != stableState) {
       stableState = reading;
       if (stableState == HIGH) {
@@ -116,7 +116,7 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
 
 bool isLeftButtonPressed() {
   // if button is pressed print paddle in top lane and bottom lane
-  if (digitalRead(leftButton) == HIGH) {
+  if (digitalRead(LEFT_BUTTON) == HIGH) {
     lcd.setCursor(2, 1);
     lcd.print(" ");
     lcd.setCursor(2, 0);
@@ -134,7 +134,7 @@ bool isLeftButtonPressed() {
 
 bool isRightButtonPressed(){
   // if button is pressed print paddle in top lane and bottom lane
-  if (digitalRead(rightButton) == HIGH) {
+  if (digitalRead(RIGHT_BUTTON) == HIGH) {
     lcd.setCursor(13, 1);
     lcd.print(" ");
     lcd.setCursor(13, 0);
@@ -165,7 +165,9 @@ void leftPlayerScored() {
   }
   
   lcd.print(pointsLeft);
-  gameDelay = defaultGameDelay;
+  gameDelay = DEFAULT_GAME_DELAY;
+  bounces = 0;
+  gameRound++;
 
   // print P1 scored message
   lcd.setCursor(3, 0);  
@@ -173,7 +175,7 @@ void leftPlayerScored() {
   lcd.setCursor(3, 1);  
   lcd.print("          ");
   Serial.println("P1 scored: " + String(pointsLeft) + " : " + String(pointsRight));
-  delay(scoredDelay);
+  delay(SCORED_DELAY);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
 }
@@ -193,7 +195,9 @@ void rightPlayerScored() {
   }
 
   lcd.print(pointsRight);
-  gameDelay = defaultGameDelay;
+  gameDelay = DEFAULT_GAME_DELAY;
+  bounces = 0;
+  gameRound++;
 
   // print P2 scored message
   lcd.setCursor(3, 0);  
@@ -201,19 +205,22 @@ void rightPlayerScored() {
   lcd.setCursor(3, 1);  
   lcd.print("          ");
   Serial.println("P2 scored: " + String(pointsLeft) + " : " + String(pointsRight));
-  delay(scoredDelay);
+  delay(SCORED_DELAY);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
 }
 
 // PC logic
 bool pcLost() {
-  int pcLost = random(1, pcDifficulty * 5);
-  if (pcLost == 1) {
-    return true;
-  } else {
-    return false;
+  if ((bounces*2) >= pcDifficulty) {
+    int pcLost = random(1, pcDifficulty * 3);
+    if (pcLost == 1) {
+      return true;
+    } else {
+      return false;
+    }
   }
+  return false;
 }
 
 // ball is traveling from left to right
@@ -240,8 +247,7 @@ void pathRight(int row) {
   }
 
   if (playersNumber == 1) {
-    if (pcLost() == true) {
-      leftPlayerScored();    
+    if (pcLost() == true) {   
       // print paddle wrong (in bottom lane and clear top lane)
       if (row == 0) {
         lcd.setCursor(13, 0);
@@ -255,6 +261,8 @@ void pathRight(int row) {
         lcd.setCursor(13, 0);
         lcd.print("|");
       }
+      // after printing the paddle notice about score change
+      leftPlayerScored();  
     } else {
       // print paddle right (in top lane and clear bottom lane)
       if (row == 0) {
@@ -310,10 +318,14 @@ void pathLeft(int row) {
   if (row == 0) {
     if (isLeftButtonPressed() == false) {
       rightPlayerScored();
+    } else {
+      bounces++;
     }
   } else {
     if (isLeftButtonPressed() == true) {
       rightPlayerScored();
+    } else {
+      bounces++;
     }
   }
 }
@@ -321,9 +333,9 @@ void pathLeft(int row) {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(startButton, INPUT);
-  pinMode(leftButton, INPUT);
-  pinMode(rightButton, INPUT);
+  pinMode(START_BUTTON, INPUT);
+  pinMode(LEFT_BUTTON, INPUT);
+  pinMode(RIGHT_BUTTON, INPUT);
 
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
@@ -338,8 +350,8 @@ void loop() {
       Serial.println("WELCOME TO PONG!");
       // loop with limited actions
       while (gamemode == WELCOME) { 
-        // isMenuOppened = isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart);
-        if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)) {
+        // isMenuOppened = isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart);
+        if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)) {
           gamemode = MENU;
         }
         blinkText("Press start...", 0, 1, 1000); // blinking text at column 0, row 1, 1000ms seen / 1000ms hidden
@@ -356,7 +368,7 @@ void loop() {
         lcd.print(playersNumber);
 
         // if left button is pressed then show previous option
-        if (isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
+        if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
           playersNumber--;
           if (playersNumber < 1) {
             playersNumber = 1;
@@ -364,7 +376,7 @@ void loop() {
         }
         
         // if right button is pressed then show next option
-        if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)) {
+        if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
           playersNumber++;
           if (playersNumber > 2){
             playersNumber = 2;
@@ -372,7 +384,7 @@ void loop() {
         }
 
         // if start button is pressed then select option and
-        if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)) {
+        if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)) {
           if (playersNumber == 1) {
             // select pcPower
             gamemode = MENU2;
@@ -401,7 +413,7 @@ void loop() {
       lcd.print(pcDifficulty);
 
       // if left button is pressed then show previous option
-      if (isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
+      if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
         pcDifficulty--;
         if (pcDifficulty < 1){
           pcDifficulty = 1;
@@ -409,7 +421,7 @@ void loop() {
       }
       
       // if right button is pressed then show next option
-      if (isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight)) {
+      if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
         pcDifficulty++;
         if (pcDifficulty > 9){
           pcDifficulty = 9;
@@ -417,7 +429,7 @@ void loop() {
       }
 
       // if player hits start then its P1vPC game
-      if (isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart)){
+      if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)){
         gamemode = GAME;
           Serial.println(pcDifficulty);
           Serial.println("");
@@ -454,8 +466,8 @@ void loop() {
 
   // I save this for later (menu button detection to copy):
 
-  // isButtonPressedInMenu(startButton, lastReadingStart, stableStart, lastDebounceTimeStart);
-  // isButtonPressedInMenu(leftButton, lastReadingLeft, stableLeft, lastDebounceTimeLeft);
-  // isButtonPressedInMenu(rightButton, lastReadingRight, stableRight, lastDebounceTimeRight);
+  // isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart);
+  // isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft);
+  // isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight);
 
 }
