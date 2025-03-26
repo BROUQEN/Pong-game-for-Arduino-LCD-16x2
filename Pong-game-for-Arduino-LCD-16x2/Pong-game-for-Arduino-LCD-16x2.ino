@@ -41,6 +41,10 @@ const unsigned long DEBOUNCE_DELAY = 50;
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
 int playersNumber = 1, pcDifficulty = 5;
 
+// game info
+const int DEFAULT_GAME_DELAY = 200, SCORED_DELAY = 1000; // delay in ms
+int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEFAULT_GAME_DELAY;
+
 // Define game modes using an enum
 enum GameMode {
   WELCOME,
@@ -52,12 +56,7 @@ enum GameMode {
 // Initialize the gamemode as WELCOME at the start
 GameMode gamemode = WELCOME;
 
-// game info
-const int DEFAULT_GAME_DELAY = 200, SCORED_DELAY = 1000; // delay in ms
-int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEFAULT_GAME_DELAY;
-
-// print blinking text function
-// every time [s] change state
+// print blinking text function. every time [s] change state
 void blinkText(String text, int column, int row, int time) {
     lcd.setCursor(column, row);
     // every second time [s] passes clear message
@@ -72,28 +71,12 @@ void blinkText(String text, int column, int row, int time) {
     }
 }
 
-// function to print is here so less spaghetti is bellow in loop
-void setupWelcomeScreen() {
-  lcd.setCursor(0,0);
-  lcd.print("Welcome to Pong!");
-  lcd.setCursor(0,1);
-  lcd.print("press start...  ");
-}
-
-// function to print is here so less spaghetti is bellow in loop
-void setupMenuScreen() {
-  lcd.setCursor(0,0);
-  lcd.print("LB|SETTINGS  |RB");
-  lcd.setCursor(0,1);
-  lcd.print("  |          |  ");
-  Serial.println("= SETTINGS =====");
-  Serial.print("Players: ");
-}
-
 // print blinking arrows to suggest player may use menu with buttons
-void updateMenuScreen(){
+void updateMenuScreen(int &value){
   blinkText("<<", 0, 1, 1000); // left arrows
   blinkText(">>", 14, 1, 1000); // right arrows
+  lcd.setCursor(12, 1);
+  lcd.print(value);
 }
 
 // THIS BUTTON DETECTION IS ONLY FOR MENU! game uses different input detection for fair gameplay
@@ -112,6 +95,17 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
     }
   }
   return false;
+}
+
+// if left button: value-- if right button: value++
+void updateValue(int &value, int minVal, int maxVal) {
+  if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
+    value = max(minVal, value - 1);
+  }
+
+  if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
+    value = min(maxVal, value + 1);
+  }
 }
 
 bool isLeftButtonPressed() {
@@ -339,15 +333,18 @@ void setup() {
 
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
-
-  // Print a welcome message to the LCD.
-  setupWelcomeScreen();
 }
 
 void loop() {
   switch (gamemode) {
     case WELCOME:
+      // setup welcome screen
+      lcd.setCursor(0,0);
+      lcd.print("Welcome to Pong!");
+      lcd.setCursor(0,1);
+      lcd.print("press start...  ");
       Serial.println("WELCOME TO PONG!");
+
       // loop with limited actions
       while (gamemode == WELCOME) { 
         // isMenuOppened = isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart);
@@ -359,80 +356,56 @@ void loop() {
       break;
       
     case MENU:
-      setupMenuScreen();
+      // setup menu screen 
+      lcd.setCursor(0,0);
+      lcd.print("LB|SETTINGS  |RB");
+      lcd.setCursor(0,1);
+      lcd.print("  |          |  ");
+      Serial.println("= SETTINGS =====");
+      Serial.print("Players: ");
+      lcd.setCursor(3, 1);
+      lcd.print("Players: ");
 
+      // loop with limited actions
       while (gamemode == MENU) {
-        updateMenuScreen();
-        lcd.setCursor(3, 1);
-        lcd.print("Players: ");
-        lcd.print(playersNumber);
-
-        // if left button is pressed then show previous option
-        if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
-          playersNumber--;
-          if (playersNumber < 1) {
-            playersNumber = 1;
-          }
-        }
-        
-        // if right button is pressed then show next option
-        if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
-          playersNumber++;
-          if (playersNumber > 2){
-            playersNumber = 2;
-          }
-        }
+        updateValue(playersNumber, 1, 2); // variable, min, max
+        updateMenuScreen(playersNumber);
 
         // if start button is pressed then select option and
         if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)) {
+          // print settings info
+          Serial.println(playersNumber);
+
           if (playersNumber == 1) {
             // select pcPower
             gamemode = MENU2;
-            // clear lcd screen for next info
-            lcd.setCursor(3, 1);
-            lcd.print("          ");
-            Serial.println(playersNumber);
-            Serial.print("PC lvl: ");
           } else if (playersNumber == 2) {
             // play PvP
             gamemode = GAME;
-            Serial.println(playersNumber);
-            Serial.println("");
           }
         }
       }
-
-      
       break;
       
     case MENU2:
-      updateMenuScreen();
-
+      // setup menu2 screen 
+      lcd.setCursor(3, 1);
+      lcd.print("          ");
       lcd.setCursor(3, 1);
       lcd.print("PC LVL: ");
-      lcd.print(pcDifficulty);
+      // print settings info
+      Serial.print("PC LVL: ");
 
-      // if left button is pressed then show previous option
-      if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
-        pcDifficulty--;
-        if (pcDifficulty < 1){
-          pcDifficulty = 1;
-        }
-      }
-      
-      // if right button is pressed then show next option
-      if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
-        pcDifficulty++;
-        if (pcDifficulty > 9){
-          pcDifficulty = 9;
-        }
-      }
+      while (gamemode == MENU2) {
+        updateValue(pcDifficulty, 1, 9); // variable, min, max
+        updateMenuScreen(pcDifficulty);
 
-      // if player hits start then its P1vPC game
-      if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)){
-        gamemode = GAME;
+        if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)){
+          // print settings info
           Serial.println(pcDifficulty);
-          Serial.println("");
+          // Play PvPC
+          gamemode = GAME;
+        }
       }
       break;
       
@@ -451,7 +424,7 @@ void loop() {
 
       lcd.setCursor(0, 1);
       lcd.print("00            00");
-
+      // game loop
       while (gamemode == GAME) {
         // random row: 0 is top line and 1 is bottom line
         pathLeft(random(0,2));
