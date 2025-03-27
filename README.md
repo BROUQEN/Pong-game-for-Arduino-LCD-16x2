@@ -41,11 +41,11 @@ Keep the ball from passing your paddle by moving it up or down.
 ---
 
 ## 🔧 To-Do List
-✔️ Menu System  
-✔️ Fully Working Game with PvP Mode  
+✔️ Basic Menu System  
+✔️ Working Game with PvP Mode  
 ✔️ Functional PvPC Mode  
 
-🟠 Add score limit option  
+🟠 Add more options  
 🟠 Add gameover sceen  
 🟠 Fix remaining bugs  
 🟠 Improve PC logic for better gameplay  
