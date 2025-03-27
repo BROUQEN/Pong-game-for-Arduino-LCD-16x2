@@ -219,25 +219,18 @@ bool pcLost() {
 
 // ball is traveling from left to right
 void pathRight(int row) {
-  // clear screen from old ball
-  lcd.setCursor(3, 0);
-  lcd.print(" ");
-  lcd.setCursor(3, 1);
-  lcd.print(" ");
-
   for (int column = 4; column <= 12; column++) {
     lcd.setCursor(column, row);
     lcd.print("O");
-    delay(gameDelay);
-    lcd.setCursor(column, row);
-    lcd.print(" ");
-    
     // those functions works only as display 
     isLeftButtonPressed();
     if (playersNumber == 2) {
       isRightButtonPressed();
     }
 
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" ");
   }
 
   if (playersNumber == 1) {
@@ -288,25 +281,18 @@ void pathRight(int row) {
 
 // ball is traveling from right to left
 void pathLeft(int row) {
-  // clear screen from old ball
-  lcd.setCursor(12, 0);
-  lcd.print(" ");
-  lcd.setCursor(12, 1);
-  lcd.print(" ");
-
   for (int column = 11; column >= 3; column--) {
     lcd.setCursor(column, row);
     lcd.print("O");
-    delay(gameDelay);
-    lcd.setCursor(column, row);
-    lcd.print(" ");
-
+    // those functions works only as display 
     isLeftButtonPressed();
-
     if (playersNumber == 2){
       isRightButtonPressed();
     }
 
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" ");
   }
 
   if (row == 0) {
