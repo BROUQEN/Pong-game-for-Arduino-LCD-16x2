@@ -41,7 +41,6 @@ const unsigned long DEBOUNCE_DELAY = 50;
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
 int playersNumber = 1, pcDifficulty = 5;
 
-// game info
 const int DEFAULT_GAME_DELAY = 200, SCORED_DELAY = 1000; // delay in ms
 int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEFAULT_GAME_DELAY;
 
@@ -221,7 +220,7 @@ bool pcLost() {
 void pathRight(int row) {
   for (int column = 4; column <= 12; column++) {
     lcd.setCursor(column, row);
-    lcd.print("O");
+    lcd.print("O"); // print ball
     // those functions works only as display 
     isLeftButtonPressed();
     if (playersNumber == 2) {
@@ -230,7 +229,7 @@ void pathRight(int row) {
 
     delay(gameDelay);
     lcd.setCursor(column, row);
-    lcd.print(" ");
+    lcd.print(" "); // clear ball
   }
 
   if (playersNumber == 1) {
@@ -283,7 +282,7 @@ void pathRight(int row) {
 void pathLeft(int row) {
   for (int column = 11; column >= 3; column--) {
     lcd.setCursor(column, row);
-    lcd.print("O");
+    lcd.print("O"); // print ball
     // those functions works only as display 
     isLeftButtonPressed();
     if (playersNumber == 2){
@@ -292,7 +291,7 @@ void pathLeft(int row) {
 
     delay(gameDelay);
     lcd.setCursor(column, row);
-    lcd.print(" ");
+    lcd.print(" "); // clear ball
   }
 
   if (row == 0) {
@@ -324,12 +323,10 @@ void setup() {
 void loop() {
   switch (gamemode) {
     case WELCOME:
+      Serial.println("WELCOME TO PONG!");
       // setup welcome screen
       lcd.setCursor(0,0);
       lcd.print("Welcome to Pong!");
-      lcd.setCursor(0,1);
-      lcd.print("press start...  ");
-      Serial.println("WELCOME TO PONG!");
 
       // loop with limited actions
       while (gamemode == WELCOME) { 
@@ -342,13 +339,13 @@ void loop() {
       break;
       
     case MENU:
+      Serial.println("= SETTINGS =====");
+      Serial.print("Players: ");
       // setup menu screen 
       lcd.setCursor(0,0);
       lcd.print("LB|SETTINGS  |RB");
       lcd.setCursor(0,1);
       lcd.print("  |          |  ");
-      Serial.println("= SETTINGS =====");
-      Serial.print("Players: ");
       lcd.setCursor(3, 1);
       lcd.print("Players: ");
 
@@ -374,13 +371,13 @@ void loop() {
       break;
       
     case MENU2:
+      // print settings info
+      Serial.print("PC LVL: ");
       // setup menu2 screen 
       lcd.setCursor(3, 1);
       lcd.print("          ");
       lcd.setCursor(3, 1);
       lcd.print("PC LVL: ");
-      // print settings info
-      Serial.print("PC LVL: ");
 
       while (gamemode == MENU2) {
         updateValue(pcDifficulty, 1, 9); // variable, min, max
