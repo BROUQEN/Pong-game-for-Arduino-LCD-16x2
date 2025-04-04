@@ -39,9 +39,23 @@ unsigned long lastDebounceTimeStart = 0, lastDebounceTimeLeft = 0, lastDebounceT
 const unsigned long DEBOUNCE_DELAY = 50;
 
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
-int playersNumber = 1, pcDifficulty = 5;
+struct MenuOption {
+  const char* name;
+  int value;
+  int minValue;
+  int maxValue;
+};
 
-// game info
+// menu option, minValue, maxValue
+const int menuSize = 2;
+MenuOption menuOptions[menuSize] = {
+  {"Players number", 1, 1, 2}, //0
+  {"PC Difficulty", 5, 1, 9}   //1   //,
+  //{"Volume", 5, 0, 20}
+};
+
+int menuIndex = 0;
+
 const int DEFAULT_GAME_DELAY = 200, SCORED_DELAY = 1000; // delay in ms
 int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEFAULT_GAME_DELAY;
 
@@ -49,7 +63,6 @@ int pointsLeft = 0, pointsRight = 0, gameRound = 0, bounces = 0, gameDelay = DEF
 enum GameMode {
   WELCOME,
   MENU,
-  MENU2,
   GAME
 };
 
@@ -97,15 +110,38 @@ bool isButtonPressedInMenu(int buttonPin, int &lastReading, int &stableState, un
   return false;
 }
 
-// if left button: value-- if right button: value++
-void updateValue(int &value, int minVal, int maxVal) {
+// Update option value
+void updateValue(MenuOption &option) {
   if (isButtonPressedInMenu(LEFT_BUTTON, lastReadingLeft, stableLeft, lastDebounceTimeLeft)) {
-    value = max(minVal, value - 1);
+    option.value = max(option.minValue, option.value - 1);
+    displayMenu();
   }
-
   if (isButtonPressedInMenu(RIGHT_BUTTON, lastReadingRight, stableRight, lastDebounceTimeRight)) {
-    value = min(maxVal, value + 1);
+    option.value = min(option.maxValue, option.value + 1);
+    displayMenu();
   }
+}
+
+// Confirm selection and go to next option
+void updateMenuIndex() {
+  if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)) {
+    menuIndex++;
+    if (menuIndex >= menuSize) {
+      gamemode = GAME;
+    } else {
+      displayMenu();
+    }
+  }
+}
+
+
+void displayMenu() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(menuOptions[menuIndex].name);
+  lcd.setCursor(0, 1);
+  lcd.print("Value: ");
+  lcd.print(menuOptions[menuIndex].value);
 }
 
 bool isLeftButtonPressed() {
@@ -163,12 +199,12 @@ void leftPlayerScored() {
   bounces = 0;
   gameRound++;
 
+  Serial.println("P1 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   // print P1 scored message
   lcd.setCursor(3, 0);  
   lcd.print("P1 SCORED!");
   lcd.setCursor(3, 1);  
   lcd.print("          ");
-  Serial.println("P1 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   delay(SCORED_DELAY);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
@@ -193,21 +229,21 @@ void rightPlayerScored() {
   bounces = 0;
   gameRound++;
 
+  Serial.println("P2 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   // print P2 scored message
   lcd.setCursor(3, 0);  
   lcd.print("P2 SCORED!");
   lcd.setCursor(3, 1);  
   lcd.print("          ");
-  Serial.println("P2 scored: " + String(pointsLeft) + " : " + String(pointsRight));
   delay(SCORED_DELAY);
   lcd.setCursor(3, 0);  
   lcd.print("          ");
 }
 
 // PC logic
-bool pcLost() {
-  if ((bounces*2) >= pcDifficulty) {
-    int pcLost = random(1, pcDifficulty * 3);
+bool pcLost(int difficulty) {
+  if ((bounces*2) >= difficulty) {
+    int pcLost = random(1, difficulty * 3);
     if (pcLost == 1) {
       return true;
     } else {
@@ -219,29 +255,25 @@ bool pcLost() {
 
 // ball is traveling from left to right
 void pathRight(int row) {
-  // clear screen from old ball
-  lcd.setCursor(3, 0);
-  lcd.print(" ");
-  lcd.setCursor(3, 1);
-  lcd.print(" ");
+  int playersNumber = menuOptions[0].value;
+  int pcDifficulty = menuOptions[1].value;
 
   for (int column = 4; column <= 12; column++) {
     lcd.setCursor(column, row);
-    lcd.print("O");
-    delay(gameDelay);
-    lcd.setCursor(column, row);
-    lcd.print(" ");
-    
+    lcd.print("O"); // print ball
     // those functions works only as display 
     isLeftButtonPressed();
     if (playersNumber == 2) {
       isRightButtonPressed();
     }
 
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" "); // clear ball
   }
 
   if (playersNumber == 1) {
-    if (pcLost() == true) {   
+    if (pcLost(pcDifficulty) == true) {   
       // print paddle wrong (in bottom lane and clear top lane)
       if (row == 0) {
         lcd.setCursor(13, 0);
@@ -288,25 +320,18 @@ void pathRight(int row) {
 
 // ball is traveling from right to left
 void pathLeft(int row) {
-  // clear screen from old ball
-  lcd.setCursor(12, 0);
-  lcd.print(" ");
-  lcd.setCursor(12, 1);
-  lcd.print(" ");
-
   for (int column = 11; column >= 3; column--) {
     lcd.setCursor(column, row);
-    lcd.print("O");
-    delay(gameDelay);
-    lcd.setCursor(column, row);
-    lcd.print(" ");
-
+    lcd.print("O"); // print ball
+    // those functions works only as display 
     isLeftButtonPressed();
-
-    if (playersNumber == 2){
+    if (menuOptions[0].value == 2){
       isRightButtonPressed();
     }
 
+    delay(gameDelay);
+    lcd.setCursor(column, row);
+    lcd.print(" "); // clear ball
   }
 
   if (row == 0) {
@@ -338,12 +363,10 @@ void setup() {
 void loop() {
   switch (gamemode) {
     case WELCOME:
+      Serial.println("WELCOME TO PONG!");
       // setup welcome screen
       lcd.setCursor(0,0);
       lcd.print("Welcome to Pong!");
-      lcd.setCursor(0,1);
-      lcd.print("press start...  ");
-      Serial.println("WELCOME TO PONG!");
 
       // loop with limited actions
       while (gamemode == WELCOME) { 
@@ -353,67 +376,29 @@ void loop() {
         }
         blinkText("Press start...", 0, 1, 1000); // blinking text at column 0, row 1, 1000ms seen / 1000ms hidden
       }
-      break;
+    break;
       
     case MENU:
-      // setup menu screen 
-      lcd.setCursor(0,0);
-      lcd.print("LB|SETTINGS  |RB");
-      lcd.setCursor(0,1);
-      lcd.print("  |          |  ");
-      Serial.println("= SETTINGS =====");
-      Serial.print("Players: ");
-      lcd.setCursor(3, 1);
-      lcd.print("Players: ");
-
+      displayMenu();
       // loop with limited actions
       while (gamemode == MENU) {
-        updateValue(playersNumber, 1, 2); // variable, min, max
-        updateMenuScreen(playersNumber);
-
-        // if start button is pressed then select option and
-        if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)) {
-          // print settings info
-          Serial.println(playersNumber);
-
-          if (playersNumber == 1) {
-            // select pcPower
-            gamemode = MENU2;
-          } else if (playersNumber == 2) {
-            // play PvP
-            gamemode = GAME;
-          }
-        }
+        updateMenuIndex();
+        updateValue(menuOptions[menuIndex]);
       }
-      break;
-      
-    case MENU2:
-      // setup menu2 screen 
-      lcd.setCursor(3, 1);
-      lcd.print("          ");
-      lcd.setCursor(3, 1);
-      lcd.print("PC LVL: ");
-      // print settings info
-      Serial.print("PC LVL: ");
-
-      while (gamemode == MENU2) {
-        updateValue(pcDifficulty, 1, 9); // variable, min, max
-        updateMenuScreen(pcDifficulty);
-
-        if (isButtonPressedInMenu(START_BUTTON, lastReadingStart, stableStart, lastDebounceTimeStart)){
-          // print settings info
-          Serial.println(pcDifficulty);
-          // Play PvPC
-          gamemode = GAME;
-        }
-      }
-      break;
+    break;
       
     case GAME:
-      // setup game screen
+      int playersNumber = menuOptions[0].value;
+      int pcDifficulty = menuOptions[1].value;
+      Serial.println("= SETTINGS =====");
+      Serial.print("Players: ");
+      Serial.println(playersNumber);
+      Serial.print("PC Power: ");
+      Serial.println(pcDifficulty);
       Serial.println("= IN GAME ======");
+
+      // setup game screen
       lcd.clear();
-      lcd.setCursor(0, 0);
 
       if (playersNumber == 1) {
         // print first paddle for pc
@@ -434,7 +419,7 @@ void loop() {
         gameDelay = random(gameDelay - 10, gameDelay);
 
       }
-      break;
+    break;
   }
 
   // I save this for later (menu button detection to copy):
