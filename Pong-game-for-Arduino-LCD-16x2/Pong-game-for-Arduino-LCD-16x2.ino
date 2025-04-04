@@ -39,8 +39,6 @@ unsigned long lastDebounceTimeStart = 0, lastDebounceTimeLeft = 0, lastDebounceT
 const unsigned long DEBOUNCE_DELAY = 50;
 
 // game settings ( Players: <1,2>, PC DIfficulty: <1,9> )
-//int playersNumber = 1, pcDifficulty = 5;
-
 struct MenuOption {
   const char* name;
   int value;
@@ -48,12 +46,11 @@ struct MenuOption {
   int maxValue;
 };
 
-// assign values to members of settings
 // menu option, minValue, maxValue
 const int menuSize = 2;
 MenuOption menuOptions[menuSize] = {
-  {"PlayersNumber", 1, 1, 2},
-  {"PcDifficulty", 5, 1, 9}//,
+  {"Players number", 1, 1, 2}, //0
+  {"PC Difficulty", 5, 1, 9}   //1   //,
   //{"Volume", 5, 0, 20}
 };
 
@@ -382,17 +379,6 @@ void loop() {
     break;
       
     case MENU:
-    /*
-      Serial.println("= SETTINGS =====");
-      Serial.print("Players: ");
-      // setup menu screen 
-      lcd.setCursor(0,0);
-      lcd.print("LB|SETTINGS  |RB");
-      lcd.setCursor(0,1);
-      lcd.print("  |          |  ");
-      lcd.setCursor(3, 1);
-      lcd.print("Players: ");
-    */
       displayMenu();
       // loop with limited actions
       while (gamemode == MENU) {
@@ -402,12 +388,17 @@ void loop() {
     break;
       
     case GAME:
-      // setup game screen
-      Serial.println("= IN GAME ======");
-      lcd.clear();
-
       int playersNumber = menuOptions[0].value;
       int pcDifficulty = menuOptions[1].value;
+      Serial.println("= SETTINGS =====");
+      Serial.print("Players: ");
+      Serial.println(playersNumber);
+      Serial.print("PC Power: ");
+      Serial.println(pcDifficulty);
+      Serial.println("= IN GAME ======");
+
+      // setup game screen
+      lcd.clear();
 
       if (playersNumber == 1) {
         // print first paddle for pc
